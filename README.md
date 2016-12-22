@@ -87,9 +87,9 @@ def time_difference(line): #Find seconds between the start and end of a session
 	
 for e in cleaned_logs: #Find the time spent connected
     e.session_time = time_difference(e)
-	
-#Let's now have a look at some lines of results, i've created a function to print all session longer than a certain threshold
-
+```	
+Let's now have a look at some lines of results, i've created a function to print all session longer than a certain threshold
+```
 def print_list(session_list, value):
     for e in session_list:
         if e.session_time>value:
