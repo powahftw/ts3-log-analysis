@@ -211,6 +211,6 @@ That makes sense.
 
 #Conclusion
 
-Following [Peter Norving suggestion][http://norvig.com/spell-correct.html] i've then decided to test my procedure with another log files to making sure i was writing a code compatibile with all my server .log files and everything seems to work correctly.
+Following [Peter Norving suggestion](http://norvig.com/spell-correct.html) i've then decided to test my procedure with another log files to making sure i was writing a code compatibile with all my server .log files and everything seems to work correctly.
 
 In the future i'd like to make this script more user friendly and implement user tracking between multiple log files to have a better understanding of usage and habits. 
