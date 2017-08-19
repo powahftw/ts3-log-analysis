@@ -1,4 +1,4 @@
-#Log Analysis of a TeamSpeak Server with Python
+# Log Analysis of a TeamSpeak Server with Python
 
 I've started this project out of personal curiosity.
 I hang out whith some of my friends on a private teamspeak and i wanted to find out more about the usage of it.
@@ -9,7 +9,7 @@ I won't be able to provide the source file, but it's a simple .log file generate
 
 The data gathered is from a bit less than a month in September
 We start from a uncleaned log files taken directly from the server and read it line by line
-```
+```python
 FILE_PATH = "ts3log.log"
 
 with open(FILE_PATH, 'r', encoding="utf8") as f: # Open the raw log files and read the lines
@@ -17,7 +17,7 @@ with open(FILE_PATH, 'r', encoding="utf8") as f: # Open the raw log files and re
 ```	
 By looking at the .log file we can see a lot of rubbish not really useful for our exploration
 I've decided to clean it up using both a blacklist and whitelist, so i easily change the filter in the next future
-```
+```python
 blacklist_word = ["|permission 'b", "b_virtualserver_", "|file upload"]
 whitelist_word = ["|client connected ", "|client disconnected "]
 
@@ -28,7 +28,7 @@ for e in lines:  # Clean the list leaving only connection or disconnection messa
 ```
 We now keep only the connection and disconnection of users to work whith. Since they are separated the best way to work whith them would be to pair them 
 I've created a custom class for storing the session time and a list where i'm going to put all the sessions
-```
+```python
 class session():
     def __init__(self, user, connection, connection_time, disconnection_time):
         self.user = user
@@ -45,7 +45,7 @@ class session():
 Now here come a problem for the final result accuracy. The .log files doesn't show if a user change nickname during the session.
 By pairing based on the nickname there could be some cases where the user connect whith "NICK1" changes to "NICK2" and for the log purposes he never logged out whith "NICK1"
 Given the infrequency on which these behaviour appear i've simply decided to throw the result out, insted of having to manually pair each nickname whith all the variation my dear friends can came up whith.
-```
+```python
 import re
 
 logs = []
@@ -69,7 +69,7 @@ for e in cleaned:  # Create a list of classes instances where we put connection 
 ```
 If there is a previous instance of connection it matches the two, otherwise it create a new one.
 Now we remove all unclosed connection to fix the problem explained before
-```
+```python
 cleaned_logs = []
 
 for e in logs: #Clean problem in the list of classes. People change nickname once connected and that causes problem
@@ -79,7 +79,7 @@ for e in logs: #Clean problem in the list of classes. People change nickname onc
 I've decided to add to the session the duration which it will be useful later
 
 from datetime import datetime
-```
+```python
 def time_difference(line): #Find seconds between the start and end of a session
     d1 = datetime.strptime(line.connection_time, '%Y-%m-%d %H:%M:%S')
     d2 = datetime.strptime(line.disconnection_time, '%Y-%m-%d %H:%M:%S')
@@ -89,7 +89,7 @@ for e in cleaned_logs: #Find the time spent connected
     e.session_time = time_difference(e)
 ```	
 Let's now have a look at some lines of results, i've created a function to print all session longer than a certain threshold
-```
+```python
 def print_list(session_list, value):
     for e in session_list:
         if e.session_time>value:
@@ -97,14 +97,14 @@ def print_list(session_list, value):
 			
 print_list(logs, 0)
 ```
-```
+```python
 "User: User1                                    	 2016-09-26 12:13:04 2016-09-26 20:50:24 	     517.33 Min
  User: User2                                     	 2016-09-26 12:22:17 2016-09-26 14:21:39 	     119.37 Min
  User: User3                                     	 2016-09-26 12:23:17 2016-09-26 12:23:22 	       0.08 Min"
  ```
 Something to keep in mind is that the connection dime is different from effective presence. Some of my friends like to stay in the AFK room for hours.
 Let's now look at the biggest connection recorded 
-```
+```python
 def most_connected(session_list):
     biggest_session = 0
     max = 0
@@ -117,7 +117,7 @@ def most_connected(session_list):
 	
 most_connected((cleaned_logs)).print_info()	
 ```
-```
+```python
 "User: StrangeFriend1                                 	 2016-09-10 17:52:03 2016-09-16 17:49:51 	    1437.80 Min"
 ```
 A bit shy of 6 days! It's a big number but as i said i had no way to check from the .log if the user didn't interact at all or kept talking for 5 straight days.
@@ -127,12 +127,12 @@ For those wondering about the possible accuracy of my result, here it is a more 
 
 To check other contender we might as well sort the entire log list based on the session_time 
 
-```
+```python
 import operator
 
 sorted_cleaned_logs = sorted(cleaned_logs, key=operator.attrgetter('session_time'), reverse=True)
 ```
-```
+```python
 "User: StrangeFriend1                                 	 2016-09-10 17:52:03 2016-09-16 17:49:51 	    1437.80 Min
 User: StrangeFriend2                                   	 2016-09-03 14:21:16 2016-09-04 13:58:13 	    1416.95 Min
 User: StrangeFriend3                                     2016-09-08 23:58:28 2016-09-09 23:22:28 	    1404.00 Min"
@@ -140,7 +140,7 @@ User: StrangeFriend3                                     2016-09-08 23:58:28 201
 As you could have guess the first result don't change. I still didn't expect such close second and third places.
 
 I now might be interested in looking at the total time spend the Teamspeak Server by the user. I'll create a dictionary with nicknames as key and timespent as value.
-```
+```python
 def time_connected(list):
     d  = {}
 
@@ -155,7 +155,7 @@ def time_connected(list):
 d0 = time_connected(cleaned_logs)
 ```
 But that doesn't tell much without a relative value. Let's get a percentage on the timedelta of the logging.
-```
+```python
 def time_connected_percentage(dict, timedelta):
     for e in dict:
         dict[e] = (dict[e]/timedelta*100)
@@ -164,7 +164,7 @@ def time_connected_percentage(dict, timedelta):
 d1 = time_connected_percentage(d0, timedelta)
 ```
 Let's now look at some result. As expected user that have the habit of staying AFK for long period of time have a higher percentage of time connected.
-```
+```python
 "NiceFriend1                                    	: 4.80
 StrangeFriend2                                   	: 16.84
 NiceFriend2                                  	    : 3.29
@@ -175,7 +175,7 @@ Since i never change the nickname and have the habit of disconnecting if i plan 
 
 Last thing i wanted to know was the favorite hours of a user. It return the probability of fining someone at a certain time out of all the time he connected.
 This is usefult to track favorite time of someone.
-```
+```python
 def probability(list,nick,target_time): #Print the probability of finding user at certain times out of all the times he connect
 
     count_pres = 0
@@ -198,7 +198,7 @@ def probability(list,nick,target_time): #Print the probability of finding user a
         return 1
 ```
 Let's now look at a friend i know connect mostly during the evening.
-```
+```python
 probability(cleaned_logs, "EveningFriend", "21:30:00")
 
 "EveningFriend is connected at 21:30:00:   29% of times connected"
@@ -209,7 +209,7 @@ probability(cleaned_logs, "EveningFriend", "8:30:00")
 ```
 That makes sense.
 
-#Conclusion
+# Conclusion
 
 Following [Peter Norving suggestion](http://norvig.com/spell-correct.html) i've then decided to test my procedure with another log files to making sure i was writing a code compatibile with all my server .log files and everything seems to work correctly.
 
